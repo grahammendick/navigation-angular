@@ -9,7 +9,7 @@
     "angular"
   ],
   "dependencies": {
-    "navigation": "*",
+    "navigationjs": "*",
     "angular": "*"
   },
   "authors": [
