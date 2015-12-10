@@ -1,29 +1,14 @@
 /**
- * Navigation v1.1.0
+ * Navigation v1.2.0
  * (c) Graham Mendick - http://grahammendick.github.io/navigation/example/angular/navigation.html
  * License: Apache License 2.0
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.NavigationAngular = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 (function (global){
-var NavigationBackLink = _dereq_('./NavigationBackLink');
-var NavigationLink = _dereq_('./NavigationLink');
-var RefreshLink = _dereq_('./RefreshLink');
-var angular = (typeof window !== "undefined" ? window.angular : typeof global !== "undefined" ? global.angular : null);
-var NavigationAngular = (function () {
-    function NavigationAngular() {
-    }
-    NavigationAngular.NavigationBackLink = NavigationBackLink;
-    NavigationAngular.NavigationLink = NavigationLink;
-    NavigationAngular.RefreshLink = RefreshLink;
-    return NavigationAngular;
-})();
-angular.module('NavigationAngular', []).directive('navigationBackLink', NavigationBackLink).directive('navigationLink', NavigationLink).directive('refreshLink', RefreshLink);
-module.exports = NavigationAngular;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./NavigationBackLink":3,"./NavigationLink":4,"./RefreshLink":5}],2:[function(_dereq_,module,exports){
-(function (global){
-var Navigation = (typeof window !== "undefined" ? window.Navigation : typeof global !== "undefined" ? global.Navigation : null);
+/// <reference path="navigation.d.ts" />
+/// <reference path="angular.d.ts" />
+/// <reference path="jquery.d.ts" />
+var Navigation = (typeof window !== "undefined" ? window['Navigation'] : typeof global !== "undefined" ? global['Navigation'] : null);
 var LinkUtility = (function () {
     function LinkUtility() {
     }
@@ -45,10 +30,13 @@ var LinkUtility = (function () {
     LinkUtility.isActive = function (key, val) {
         if (!Navigation.StateContext.state)
             return false;
-        if (val != null && val.toString()) {
+        if (val != null) {
             var trackTypes = Navigation.StateContext.state.trackTypes;
             var currentVal = Navigation.StateContext.data[key];
-            return currentVal != null && (trackTypes ? val === currentVal : val.toString() == currentVal.toString());
+            if (currentVal != null)
+                return trackTypes ? val === currentVal : val.toString() == currentVal.toString();
+            else
+                return val === '';
         }
         return true;
     };
@@ -70,7 +58,10 @@ var LinkUtility = (function () {
                     var navigating = _this.getNavigating($parse, attrs, scope);
                     if (navigating(e, link)) {
                         e.preventDefault();
-                        Navigation.StateController.navigateLink(link);
+                        var historyAction = scope.$eval(attrs['historyAction']);
+                        if (typeof historyAction === 'string')
+                            historyAction = Navigation.HistoryAction[historyAction];
+                        Navigation.StateController.navigateLink(link, false, historyAction);
                     }
                 }
             }
@@ -95,12 +86,31 @@ var LinkUtility = (function () {
     return LinkUtility;
 })();
 module.exports = LinkUtility;
-
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],3:[function(_dereq_,module,exports){
+},{}],2:[function(_dereq_,module,exports){
+(function (global){
+var NavigationBackLink = _dereq_('./NavigationBackLink');
+var NavigationLink = _dereq_('./NavigationLink');
+var RefreshLink = _dereq_('./RefreshLink');
+var angular = (typeof window !== "undefined" ? window['angular'] : typeof global !== "undefined" ? global['angular'] : null);
+var NavigationAngular = (function () {
+    function NavigationAngular() {
+    }
+    NavigationAngular.NavigationBackLink = NavigationBackLink;
+    NavigationAngular.NavigationLink = NavigationLink;
+    NavigationAngular.RefreshLink = RefreshLink;
+    return NavigationAngular;
+})();
+angular.module('NavigationAngular', [])
+    .directive('navigationBackLink', NavigationBackLink)
+    .directive('navigationLink', NavigationLink)
+    .directive('refreshLink', RefreshLink);
+module.exports = NavigationAngular;
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./NavigationBackLink":3,"./NavigationLink":4,"./RefreshLink":5}],3:[function(_dereq_,module,exports){
 (function (global){
 var LinkUtility = _dereq_('./LinkUtility');
-var Navigation = (typeof window !== "undefined" ? window.Navigation : typeof global !== "undefined" ? global.Navigation : null);
+var Navigation = (typeof window !== "undefined" ? window['Navigation'] : typeof global !== "undefined" ? global['Navigation'] : null);
 var NavigationBackLink = function ($parse) {
     return {
         restrict: 'EA',
@@ -118,19 +128,19 @@ function setNavigationBackLink(element, attrs, distance) {
     LinkUtility.setLink(element, attrs, function () { return Navigation.StateController.getNavigationBackLink(distance); });
 }
 module.exports = NavigationBackLink;
-
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./LinkUtility":2}],4:[function(_dereq_,module,exports){
+},{"./LinkUtility":1}],4:[function(_dereq_,module,exports){
 (function (global){
 var LinkUtility = _dereq_('./LinkUtility');
-var Navigation = (typeof window !== "undefined" ? window.Navigation : typeof global !== "undefined" ? global.Navigation : null);
+var Navigation = (typeof window !== "undefined" ? window['Navigation'] : typeof global !== "undefined" ? global['Navigation'] : null);
 var NavigationLink = function ($parse) {
     return {
         restrict: 'EA',
         link: function (scope, element, attrs) {
             var action, toData, includeCurrentData, currentDataKeys, activeCssClass, disableActive;
             LinkUtility.addListeners(element, function () { return setNavigationLink(element, attrs, action, toData, includeCurrentData, currentDataKeys, activeCssClass, disableActive); }, $parse, attrs, scope);
-            var watchAttrs = [attrs['navigationLink'], attrs['toData'], attrs['includeCurrentData'], attrs['currentDataKeys'], attrs['activeCssClass'], attrs['disableActive']];
+            var watchAttrs = [attrs['navigationLink'], attrs['toData'], attrs['includeCurrentData'],
+                attrs['currentDataKeys'], attrs['activeCssClass'], attrs['disableActive']];
             scope.$watchGroup(watchAttrs, function (values) {
                 action = values[0];
                 toData = values[1];
@@ -157,19 +167,19 @@ function isActive(action) {
     return nextState === nextState.parent.initial && nextState.parent === Navigation.StateContext.dialog;
 }
 module.exports = NavigationLink;
-
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./LinkUtility":2}],5:[function(_dereq_,module,exports){
+},{"./LinkUtility":1}],5:[function(_dereq_,module,exports){
 (function (global){
 var LinkUtility = _dereq_('./LinkUtility');
-var Navigation = (typeof window !== "undefined" ? window.Navigation : typeof global !== "undefined" ? global.Navigation : null);
+var Navigation = (typeof window !== "undefined" ? window['Navigation'] : typeof global !== "undefined" ? global['Navigation'] : null);
 var RefreshLink = function ($parse) {
     return {
         restrict: 'EA',
         link: function (scope, element, attrs) {
             var toData, includeCurrentData, currentDataKeys, activeCssClass, disableActive;
             LinkUtility.addListeners(element, function () { return setRefreshLink(element, attrs, toData, includeCurrentData, currentDataKeys, activeCssClass, disableActive); }, $parse, attrs, scope);
-            var watchAttrs = [attrs['refreshLink'], attrs['includeCurrentData'], attrs['currentDataKeys'], attrs['activeCssClass'], attrs['disableActive']];
+            var watchAttrs = [attrs['refreshLink'], attrs['includeCurrentData'],
+                attrs['currentDataKeys'], attrs['activeCssClass'], attrs['disableActive']];
             scope.$watchGroup(watchAttrs, function (values) {
                 toData = values[0];
                 includeCurrentData = values[1];
@@ -191,7 +201,6 @@ function setRefreshLink(element, attrs, toData, includeCurrentData, currentDataK
     LinkUtility.setActive(element, attrs, active, activeCssClass, disableActive);
 }
 module.exports = RefreshLink;
-
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./LinkUtility":2}]},{},[1])(1)
+},{"./LinkUtility":1}]},{},[2])(2)
 });
